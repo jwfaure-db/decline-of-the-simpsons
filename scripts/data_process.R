@@ -4,13 +4,14 @@ if(!require('lubridate')) install.packages('lubridate'); library('lubridate')
 process_raw_data = function(){
   files = list.files("raw_data/")
   for(i in files){
-    bunjil_extract <- readr::read_csv(paste0("raw_data/", i)) %>% 
+    fn <- str_remove(i, ".tsv")
+    raw_file <- readr::read_tsv(paste0("raw_data/", i)) %>% 
       janitor::remove_empty() %>% janitor::clean_names()
+    
+    message(paste0("Saving ", fn, " file..."))
+    message("Missing values: ", sum(is.na(raw_file)))
+    message("Variables with highest proportion of missing values: ")
+    print(raw_file %>% is.na %>% colMeans %>% sort %>% rev() %>% head())
+    saveRDS(object = raw_file, file = paste0("./clean_data/", fn, ".rds"))
   }
-
-  message("Saving data files...")
-  message("Missing values: ", sum(is.na(bunjil_extract_subset)))
-  message("Variables with highest proportion of missing values: ")
-  print(bunjil_extract_subset %>% is.na %>% colMeans %>% sort %>% rev() %>% head())
-  saveRDS(object = bunjil_extract_subset, file = "./clean_data/bunjil_extract.rds")
 }

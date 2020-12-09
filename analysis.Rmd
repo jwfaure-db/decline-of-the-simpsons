@@ -14,12 +14,53 @@ editor options:
   chunk_output_type: console
 ---
 
-```{r setup, include=FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(fig.path = "plots/", fig.width = 6, fig.height = 5,
                       fig.align = "center", fig.ext = "png", 
                       echo = TRUE, warning = FALSE, message = FALSE, 
                       scipen = 999)
-
+library(tidyverse)
 library(ggplot2)
+library(viridis)
+library(ggThemeAssist)
 theme_set(theme_bw())
+
+source("scripts/data_process.R")
 ```
+
+
+```{r, include = FALSE}
+# process_raw_data() # run only first time, or when any updates occur
+
+files = list.files("clean_data/")
+for(i in files){
+  fn <- i %>% str_remove_all(".rds")
+  assign(fn %>% str_replace_all("[[:punct:]]", "_"), 
+         readRDS(paste0("clean_data/", fn, ".rds"))
+         ) 
+}
+```
+
+```{r}
+#obtain all tv series information
+simpsons <- title_basics %>% dplyr::filter(primary_title == "The Simpsons") %>% 
+  dplyr::left_join(title_episode, by = c("tconst"="parent_tconst")) %>% 
+  dplyr::left_join(title_ratings, by = c("tconst.y"="tconst")) %>% 
+  dplyr::transmute(
+    tconst, 
+    primary_title,
+    episode_tconst = `tconst.y`,
+    season = parse_number(season_number),
+    episode = parse_number(episode_number), 
+    average_rating,
+    num_votes
+  )
+
+simpsons %>% ggplot(aes(x = season, y = episode)) +
+  geom_tile(aes(fill = average_rating), na.rm = TRUE) +
+  geom_text(aes(label = round(average_rating, 1)),  na.rm = TRUE) +
+  scale_fill_viridis(option = "inferno", discrete = FALSE) +
+  scale_y_reverse() +
+  scale_x_continuous(breaks = 1:32)
+```
+
