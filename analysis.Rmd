@@ -21,8 +21,11 @@ knitr::opts_chunk$set(fig.path = "plots/", fig.width = 6, fig.height = 5,
                       scipen = 999)
 library(tidyverse)
 library(ggplot2)
-library(viridis)
+library(ggthemes)
 library(ggThemeAssist)
+library(cowplot)
+library(here)
+library(magick)
 theme_set(theme_bw())
 
 source("scripts/data_process.R")
@@ -43,24 +46,78 @@ for(i in files){
 
 ```{r}
 #obtain all tv series information
-simpsons <- title_basics %>% dplyr::filter(primary_title == "The Simpsons") %>% 
+simpsons <- title_basics %>% dplyr::filter(primary_title == "The Simpsons" & title_type == "tvSeries") %>% 
   dplyr::left_join(title_episode, by = c("tconst"="parent_tconst")) %>% 
   dplyr::left_join(title_ratings, by = c("tconst.y"="tconst")) %>% 
+  drop_na() %>% 
   dplyr::transmute(
     tconst, 
     primary_title,
     episode_tconst = `tconst.y`,
-    season = parse_number(season_number),
+    season = parse_number(season_number) %>% factor(),
     episode = parse_number(episode_number), 
     average_rating,
     num_votes
   )
 
-simpsons %>% ggplot(aes(x = season, y = episode)) +
-  geom_tile(aes(fill = average_rating), na.rm = TRUE) +
-  geom_text(aes(label = round(average_rating, 1)),  na.rm = TRUE) +
-  scale_fill_viridis(option = "inferno", discrete = FALSE) +
-  scale_y_reverse() +
-  scale_x_continuous(breaks = 1:32)
+write_csv(simpsons, file = "clean_data/simpsons.csv")
+
+simpsons <- read_csv(file = "clean_data/simpsons.csv")
 ```
+
+```{r}
+# average season rating
+lollipop <- simpsons %>% dplyr::transmute(
+  season = season %>% factor(),
+  episode,
+  num_votes,
+  total_rating = average_rating * num_votes
+  ) %>% group_by(season) %>% 
+  summarise(season_rating = sum(total_rating, na.rm = TRUE) / sum(num_votes, na.rm = TRUE)) %>% 
+  ggplot(aes(x = season, y = season_rating)) +
+  geom_point(aes(colour = season_rating), size = 7) + 
+  geom_segment(aes(x = season, xend = season, 
+                   y = 0, yend = season_rating,
+                   colour = season_rating),
+               size = 3) + 
+  geom_text(aes(label = round(season_rating, 1)), size = 3, na.rm = TRUE) +
+  scale_colour_gradient2_tableau(palette = "Red-Green Diverging") + 
+  labs(x = "Season", y = "Average season rating", 
+    colour = "Average season rating")
+
+
+lollipop_blank <- lollipop +   
+  theme(panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(), 
+    panel.border = element_blank(),
+    panel.background = element_blank(), 
+    plot.background = element_blank(), 
+    legend.position = "none") +
+  labs(x = NULL, y = NULL, colour = NULL)
+
+# episode x season rating heatmap
+heatmap <- simpsons %>% mutate(season = season %>% factor()) %>% 
+  ggplot(aes(x = season, y = episode)) +
+  geom_tile(aes(fill = average_rating), na.rm = TRUE) +
+  geom_text(aes(label = round(average_rating, 1)), size = 3, na.rm = TRUE) +
+  scale_fill_gradient2_tableau(palette = "Red-Green Diverging") +
+  scale_y_continuous(breaks = 1:25, trans = "reverse") + 
+  scale_x_discrete(position = "top") + 
+  coord_cartesian(ylim = c(25, 1)) + 
+  labs(x = "Season", y = NULL) + 
+  theme(panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(), 
+    panel.border = element_blank(),
+    panel.background = element_blank(), 
+    plot.background = element_blank(),
+    legend.position = "none")
+```
+
+```{r}
+combined_ratings_plot <- cowplot::plot_grid(lollipop_blank, heatmap, align = "v", ncol = 1, rel_heights = c(0.25, 0.75)) + 
+  theme(panel.background = element_rect(fill = "#ffd90f"))
+
+ggsave(combined_ratings_plot, file = "simpsons_decline.png")
+```
+
 
