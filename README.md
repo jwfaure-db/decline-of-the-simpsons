@@ -13,7 +13,7 @@ An episode from The Simpsons' eighth season called “The Simpsons Spin-off Show
 
 The episode aired in the heady days of 1997 when The Simpsons was in a golden period of eight brilliant seasons. The show was one of the most critically adored and generally beloved television shows ever to grace the airwaves. Little did anyone know that the sharp decline of one the greatest television shows of all time was just around the corner. Watch an episode of any recent season and you might think Moe gets a cellphone isn’t such an awful idea after all. It certainly beats Moe becomes a judge on American Idol.
 
-!(simpsons_decline.png)
+![The average ratings for every season and episode of The Simpsons.](simpsons_decline.png)
 
 The glory years of seasons 1–8 (maybe including some of 9, if we’re being generous) now stand as just the beginning of a show that has ran for 30 seasons (and counting). But so marked has been the show’s decline in quality that you might struggle to find any self-declared Simpsons fans who still tune in regularly, and those who do are likely to do so more out of a sense of obligation than anything else. Even harder to find are those that would defend the modern-day incarnation of the show or claim it’s still as good as it’s ever been (outside of writers, directors, producers, and the voice actors).
 
